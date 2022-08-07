@@ -22,9 +22,9 @@ int main(int argc, char *argv[])
     struct option options[] = {
         {"bytes", required_argument, NULL, 'c'}, // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
         {"lines", optional_argument, NULL, 'n'}, // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
+        {"verbose", no_argument, &verbose_flag, 'v'},
         {"help", no_argument, &help_flag, 3},    // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi
         {"version", no_argument, &version_flag, 4},
-        {"verbose", no_argument, &verbose_flag, 'v'},
         {0, 0, 0, 0}, // 4. parametredeki değer ile set eder
     };
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
                 break;
             putchar(c);
         }
-        putchar(10);
+        putchar('\n');
         fclose(fp);
     }
 
@@ -129,15 +129,15 @@ int main(int argc, char *argv[])
 
             for (int i = 0; i < DEFAULT_LINE_NUMBER; ++i)
             {
-                while ((c = fgetc(fp)) != 10)
+                while ((c = fgetc(fp)) != '\n')
                 {
                     if (feof(fp))
                         break;
                     putchar(c);
                 }
-                putchar(10);
+                putchar('\n');
             }
-            putchar(10);
+            putchar('\n');
             fclose(fp);
         }
         else
@@ -158,13 +158,13 @@ int main(int argc, char *argv[])
 
             for (int i = 0; i < inputLines; ++i)
             {
-                while ((c = fgetc(fp)) != 10)
+                while ((c = fgetc(fp)) != '\n')
                 {
                     putchar(c);
                 }
-                putchar(10);
+                putchar('\n');
             }
-            putchar(10);
+            putchar('\n');
             fclose(fp);
         }
     }
@@ -184,13 +184,13 @@ int main(int argc, char *argv[])
 
         for (int i = 0; i < DEFAULT_LINE_NUMBER; ++i)
         {
-            while ((c = fgetc(fp)) != 10)
+            while ((c = fgetc(fp)) != '\n')
             {
                 putchar(c);
             }
-            putchar(10);
+            putchar('\n');
         }
-        putchar(10);
+        putchar('\n');
         fclose(fp);
     }
 
