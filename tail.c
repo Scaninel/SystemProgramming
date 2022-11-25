@@ -80,7 +80,7 @@ int main (int argc, char *argv[])
     if(errFlag)
       exit(EXIT_FAILURE);
 
-    if(c_flag && n_flag)
+    if((c_flag && n_flag) || (bytes_flag && lines_flag))
     {
         printf("-c option and -n option can not be used at the same time\n");
         exit(EXIT_FAILURE);
@@ -106,6 +106,19 @@ int main (int argc, char *argv[])
             printf("-c option is used with arg: \"%s\"...\n", byte_arg);
         else
             printf("--bytes option is used with arg: \"%s\"...\n", byte_arg);
+
+
+        FILE *fp = fopen(inputFileName, "r");
+
+        if (!fp)
+        {
+            perror("File opening failed");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("file: \"%s\" is opened\n", inputFileName);
+
+
     }
 
     if(n_flag || lines_flag)
@@ -114,6 +127,17 @@ int main (int argc, char *argv[])
             printf("-n option is used with arg: \"%s\"...\n", line_arg);
         else
             printf("--lines option is used with arg: \"%s\"...\n", line_arg);
+
+        FILE *fp = fopen(inputFileName, "r");
+
+        if (!fp)
+        {
+            perror("File opening failed");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("file: \"%s\" is opened\n", inputFileName);
+    
     }
 
     if(v_flag)
