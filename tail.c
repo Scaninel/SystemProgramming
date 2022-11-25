@@ -6,19 +6,21 @@
 int main (int argc, char *argv[])
 {
     int result, index;
-    int c_flag, n_flag, v_flag, version_flag, help_flag;
+    int c_flag, n_flag, v_flag, version_flag, help_flag, bytes_flag, lines_flag;
     char *byte_arg, *line_arg;
 
     int i=0;
     int errFlag = 0;
     opterr = 0;
 
-    c_flag = n_flag = v_flag = version_flag = help_flag = 0;
+    c_flag = n_flag = v_flag = version_flag = help_flag = bytes_flag = lines_flag= 0;
     byte_arg = line_arg = NULL;
 
+    char *inputFileName = NULL;
+
     struct option options [] ={
-        {"bytes", no_argument, &c_flag, 1},              // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
-        {"lines", required_argument, &n_flag, 1},      // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
+        {"bytes", required_argument, NULL, 2},              // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
+        {"lines", required_argument, NULL, 3},      // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
         {"verbose", no_argument, &v_flag, 1},       // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi 
         {"version", no_argument, &version_flag, 1},
         {"help", no_argument, &help_flag, 1},
@@ -46,25 +48,26 @@ int main (int argc, char *argv[])
                 v_flag =1;
                 break;
             }
-            // case 2:        
-            // {
-            //     count_flag =1;
-            //     break;
-            // }
-            // case 3:        
-            // {
-            //     line_flag =1;
-            //     break;
-            // }
+
+            case 2:        
+            {
+                bytes_flag =1;
+                byte_arg = optarg;
+                break;
+            }
+            case 3:        
+            {
+                lines_flag =1;
+                line_arg = optarg;
+                break;
+            }
 
             case '?':
             {
-                if(optopt == 'b')
-                    fprintf(stderr, "-b option must have an argument\n");
-                else if(optopt == 2)
-                    fprintf(stderr, "argument must be specified with count option \n");
-                else if (optopt !=0)
-                    fprintf(stderr, "invalid option: -%c\n", optopt);
+                if(optopt == 'c')
+                    fprintf(stderr, "-c or --bytes option must have an argument\n");
+                else if (optopt == 'n')
+                    fprintf(stderr, "-n or --lines option must have an argument\n");
                 else
                     fprintf(stderr, "invalid long option...\n");
                 
@@ -75,27 +78,46 @@ int main (int argc, char *argv[])
     }
 
     if(errFlag)
-      exit(EXIT_FAILURE);  
+      exit(EXIT_FAILURE);
 
-    if(c_flag)
-        printf("-c option is used\n");
+    if(c_flag && n_flag)
+    {
+        printf("-c option and -n option can not be used at the same time\n");
+        exit(EXIT_FAILURE);
+    }
 
-    if(n_flag)
-        printf("-n option is used with arg: \"%s\"...\n", line_arg);
+    if (optind != argc)
+    {
+        inputFileName = argv[optind];
+        printf("input file name: %s\n", inputFileName);
+    }
+    else
+    {
+        if (!help_flag)
+        {
+            printf("NO INPUT FILE NAME\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if(c_flag || bytes_flag)
+    {
+        if(c_flag)
+            printf("-c option is used with arg: \"%s\"...\n", byte_arg);
+        else
+            printf("--bytes option is used with arg: \"%s\"...\n", byte_arg);
+    }
+
+    if(n_flag || lines_flag)
+    {
+        if(n_flag)
+            printf("-n option is used with arg: \"%s\"...\n", line_arg);
+        else
+            printf("--lines option is used with arg: \"%s\"...\n", line_arg);
+    }
 
     if(v_flag)
         printf("-v option is used \n");
-
-    // if(count_flag)
-    //     printf("--count option is used with arg: \"%s\"...\n", count_arg);
-
-    // if(line_flag)
-    // {
-    //     if(line_arg != NULL)
-    //         printf("--line option is used with arg: \"%s\"...\n", line_arg);
-    //     else
-    //         printf("--line option is used without argument...\n");
-    // }
 
     if (help_flag)
     {
@@ -138,15 +160,15 @@ Mandatory arguments to long options are mandatory for short options too.\n\
         printf("tail version 1.0 \nWritten by S.Can İNEL, on July 2022\nDedicated to my sweetheart Ms.Şevval :)\n");
     }
 
-    if(optind != argc)
-    {
-        printf("seceneksiz (yani normal) argumanlar\n");
+    // if(optind != argc)
+    // {
+    //     printf("seceneksiz (yani normal) argumanlar\n");
 
-        for(i = optind; i < argc; i++)
-        {
-            printf("%s\n", argv[i]);
-        }
-    }
+    //     for(i = optind; i < argc; i++)
+    //     {
+    //         printf("%s\n", argv[i]);
+    //     }
+    // }
 
     return 0;
 }
