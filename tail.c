@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
     if (optind != argc)
     {
         inputFileName = argv[optind];
-        printf("input file name: %s\n", inputFileName);
     }
     else
     {
@@ -102,13 +101,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (v_flag)
+        printf("===============================\nfile \"%s\" is written as below\n===============================\n\n", inputFileName);
+
     if (c_flag || bytes_flag)
     {
-        if (c_flag)
-            printf("-c option is used with arg: \"%s\"...\n", byte_arg);
-        else
-            printf("--bytes option is used with arg: \"%s\"...\n", byte_arg);
-
         FILE *fp = fopen(inputFileName, "r");
 
         if (!fp)
@@ -117,11 +114,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        printf("file: \"%s\" is opened, pos_ind : %li \n", inputFileName, ftell(fp));
-
         fseek(fp, 0, SEEK_END);
-
-        printf("pos_ind : %li \n", ftell(fp));
 
         int readRes = 0;
         char readByte = 0;
@@ -132,14 +125,14 @@ int main(int argc, char *argv[])
             fseek(fp, -2, SEEK_CUR);
             readRes = fread(&readByte, 1, 1, fp);
             readCount++;
-        } 
-        while (readRes && ftell(fp) && readCount < atoi(byte_arg));
+
+        } while (readRes && ftell(fp) >= 2 && readCount < atoi(byte_arg));
 
         readByte = 0;
 
         fseek(fp, -1, SEEK_CUR);
 
-        while(fread(&readByte, 1, 1, fp))
+        while (fread(&readByte, 1, 1, fp))
         {
             printf("%c", readByte);
         }
@@ -147,11 +140,6 @@ int main(int argc, char *argv[])
 
     if (n_flag || lines_flag)
     {
-        if (n_flag)
-            printf("-n option is used with arg: \"%s\"...\n", line_arg);
-        else
-            printf("--lines option is used with arg: \"%s\"...\n", line_arg);
-
         FILE *fp = fopen(inputFileName, "r");
 
         if (!fp)
@@ -160,11 +148,32 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        printf("file: \"%s\" is opened\n", inputFileName);
-    }
+        fseek(fp, 0, SEEK_END);
 
-    if (v_flag)
-        printf("-v option is used \n");
+        int readRes = 0;
+        char readByte = 0;
+        int readLineCnt = 0;
+
+        do
+        {
+            fseek(fp, -2, SEEK_CUR);
+            readRes = fread(&readByte, 1, 1, fp);
+            if (readByte == '\n')
+                readLineCnt++;
+
+        } while (readRes && ftell(fp) >= 2 && readLineCnt < atoi(line_arg));
+
+        readByte = 0;
+
+        fseek(fp, -1, SEEK_CUR);
+
+        while (fread(&readByte, 1, 1, fp) && readLineCnt >= 0)
+        {
+            printf("%c", readByte);
+            if (readByte == '\n')
+                readLineCnt--;
+        }
+    }
 
     if (help_flag)
     {
@@ -206,16 +215,6 @@ Mandatory arguments to long options are mandatory for short options too.\n\
     {
         printf("tail version 1.0 \nWritten by S.Can İNEL, on July 2022\nDedicated to my sweetheart Ms.Şevval :)\n");
     }
-
-    // if(optind != argc)
-    // {
-    //     printf("seceneksiz (yani normal) argumanlar\n");
-
-    //     for(i = optind; i < argc; i++)
-    //     {
-    //         printf("%s\n", argv[i]);
-    //     }
-    // }
 
     return 0;
 }
