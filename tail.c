@@ -1,86 +1,88 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
-
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int result, index;
     int c_flag, n_flag, v_flag, version_flag, help_flag, bytes_flag, lines_flag;
     char *byte_arg, *line_arg;
 
-    int i=0;
+    int i = 0;
     int errFlag = 0;
     opterr = 0;
 
-    c_flag = n_flag = v_flag = version_flag = help_flag = bytes_flag = lines_flag= 0;
+    c_flag = n_flag = v_flag = version_flag = help_flag = bytes_flag = lines_flag = 0;
     byte_arg = line_arg = NULL;
 
     char *inputFileName = NULL;
 
-    struct option options [] ={
-        {"bytes", required_argument, NULL, 2},              // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
-        {"lines", required_argument, NULL, 3},      // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
-        {"verbose", no_argument, &v_flag, 1},       // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi 
+    struct option options[] = {
+        {"bytes", required_argument, NULL, 2}, // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
+        {"lines", required_argument, NULL, 3}, // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
+        {"verbose", no_argument, &v_flag, 1},  // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi
         {"version", no_argument, &version_flag, 1},
         {"help", no_argument, &help_flag, 1},
-        {0,0,0,0},                                  // 4. parametredeki değer ile set eder
+        {0, 0, 0, 0}, // 4. parametredeki değer ile set eder
     };
 
-    while((result = getopt_long(argc, argv, "c:n:v", options, &index)) != -1)
+    while ((result = getopt_long(argc, argv, "c:n:v", options, &index)) != -1)
     {
-        switch (result) 
+        switch (result)
         {
-            case 'c':         
-            {
-                c_flag =1;
-                byte_arg = optarg;;
-                break;
-            }
-            case 'n':         
-            {
-                n_flag =1;
-                line_arg = optarg;
-                break;
-            }
-            case 'v':        
-            {
-                v_flag =1;
-                break;
-            }
+        case 'c':
+        {
+            c_flag = 1;
+            byte_arg = optarg;
+            ;
+            break;
+        }
+        case 'n':
+        {
+            n_flag = 1;
+            line_arg = optarg;
+            break;
+        }
+        case 'v':
+        {
+            v_flag = 1;
+            break;
+        }
 
-            case 2:        
-            {
-                bytes_flag =1;
-                byte_arg = optarg;
-                break;
-            }
-            case 3:        
-            {
-                lines_flag =1;
-                line_arg = optarg;
-                break;
-            }
+        case 2:
+        {
+            bytes_flag = 1;
+            byte_arg = optarg;
+            break;
+        }
+        case 3:
+        {
+            lines_flag = 1;
+            line_arg = optarg;
+            break;
+        }
 
-            case '?':
-            {
-                if(optopt == 'c')
-                    fprintf(stderr, "-c or --bytes option must have an argument\n");
-                else if (optopt == 'n')
-                    fprintf(stderr, "-n or --lines option must have an argument\n");
-                else
-                    fprintf(stderr, "invalid long option...\n");
-                
-                errFlag=1;
-                break;
-            }
+        case '?':
+        {
+            if (optopt == 'c')
+                fprintf(stderr, "-c or --bytes option must have an argument\n");
+            else if (optopt == 'n')
+                fprintf(stderr, "-n or --lines option must have an argument\n");
+            else
+                fprintf(stderr, "invalid long option...\n");
+
+            errFlag = 1;
+            break;
+        }
         }
     }
 
-    if(errFlag)
-      exit(EXIT_FAILURE);
+    if (errFlag)
+        exit(EXIT_FAILURE);
 
-    if((c_flag && n_flag) || (bytes_flag && lines_flag))
+    if ((c_flag && n_flag) || (bytes_flag && lines_flag))
     {
         printf("-c option and -n option can not be used at the same time\n");
         exit(EXIT_FAILURE);
@@ -100,13 +102,12 @@ int main (int argc, char *argv[])
         }
     }
 
-    if(c_flag || bytes_flag)
+    if (c_flag || bytes_flag)
     {
-        if(c_flag)
+        if (c_flag)
             printf("-c option is used with arg: \"%s\"...\n", byte_arg);
         else
             printf("--bytes option is used with arg: \"%s\"...\n", byte_arg);
-
 
         FILE *fp = fopen(inputFileName, "r");
 
@@ -116,14 +117,37 @@ int main (int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        printf("file: \"%s\" is opened\n", inputFileName);
+        printf("file: \"%s\" is opened, pos_ind : %li \n", inputFileName, ftell(fp));
 
+        fseek(fp, 0, SEEK_END);
 
+        printf("pos_ind : %li \n", ftell(fp));
+
+        int readRes = 0;
+        char readByte = 0;
+        int readCount = 0;
+
+        do
+        {
+            fseek(fp, -2, SEEK_CUR);
+            readRes = fread(&readByte, 1, 1, fp);
+            readCount++;
+        } 
+        while (readRes && ftell(fp) && readCount < atoi(byte_arg));
+
+        readByte = 0;
+
+        fseek(fp, -1, SEEK_CUR);
+
+        while(fread(&readByte, 1, 1, fp))
+        {
+            printf("%c", readByte);
+        }
     }
 
-    if(n_flag || lines_flag)
+    if (n_flag || lines_flag)
     {
-        if(n_flag)
+        if (n_flag)
             printf("-n option is used with arg: \"%s\"...\n", line_arg);
         else
             printf("--lines option is used with arg: \"%s\"...\n", line_arg);
@@ -137,10 +161,9 @@ int main (int argc, char *argv[])
         }
 
         printf("file: \"%s\" is opened\n", inputFileName);
-    
     }
 
-    if(v_flag)
+    if (v_flag)
         printf("-v option is used \n");
 
     if (help_flag)
