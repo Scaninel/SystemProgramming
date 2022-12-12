@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 
 #define DEFAULT_BUFFER_SIZE 512
 
@@ -24,9 +25,19 @@ int main(int argc, char *argv[])
     char *ifPos = strstr(argv[1], "if=");
     char *ofPos = strstr(argv[2], "of=");
     char *bs = NULL;
+    char *count = NULL;
+    int cnt = 0;
+    char *conv = NULL;
+    int ucaseFlg, lcaseFlg, exclFlg = 0;
 
     if (argc > 3)
         bs = strstr(argv[3], "bs=");
+
+    if (argc > 4)
+        count = strstr(argv[4], "count=");
+
+    if (argc > 5)
+        conv = strstr(argv[5], "conv=");
 
     if (ifPos == NULL || ofPos == NULL || ((ifPos - argv[1]) != 0) || ((ofPos - argv[2]) != 0))
     {
@@ -46,6 +57,51 @@ int main(int argc, char *argv[])
     {
         blockSize = atoi(&argv[3][3]);
         printf("block size is defined by user as '%d-bytes'\n", blockSize);
+    }
+
+    if ((argc < 4) || (count == NULL) || ((count - argv[4]) != 0))
+    {
+        printf("block count is not defined, whole file is going to be copied\n");
+    }
+    else
+    {
+        cnt = atoi(&argv[4][6]);
+        printf("block count is defined by user as '%d-bytes'\n", cnt);
+    }
+
+    if ((argc < 5) || (conv == NULL) || ((conv - argv[5]) != 0))
+    {
+        printf("no conversion option\n");
+    }
+    else
+    {
+        char *convStr = strtok(&conv[5], ",");
+
+        while (convStr != NULL)
+        {
+            if (!strcmp(convStr, "ucase"))
+            {
+                printf("ucase option is used\n");
+                ucaseFlg = 1;
+            }
+            if (!strcmp(convStr, "lcase"))
+            {
+                printf("lcase option is used\n");
+                lcaseFlg = 1;
+            }
+            if (!strcmp(convStr, "excl"))
+            {
+                printf("excl option is used\n");
+                exclFlg = 1;
+            }
+
+            convStr = strtok(NULL, ",");
+        }
+
+        if (!(ucaseFlg || lcaseFlg || exclFlg))
+        {
+            exit_sys("invalid conv option!!!!\n");
+        }
     }
 
     // if ((strstr(inputFileName, " ") != NULL) || (strstr(destFileName, " ") != NULL))
@@ -72,14 +128,15 @@ int main(int argc, char *argv[])
     do
     {
         f_readSize = read(inFd, readBuf, blockSize);
-        if(f_readSize <= 0)
+        if ((f_readSize <= 0) || (((argc < 4) || (count == NULL) || ((count - argv[3]) != 0)) && (cnt <= 0)))
             break;
 
-        write(destFd,readBuf,f_readSize);
-        memset(readBuf,0,blockSize);
+        write(destFd, readBuf, f_readSize);
+        memset(readBuf, 0, blockSize);
 
-    } while (f_readSize > 0);
+    } while (f_readSize > 0, cnt--);
 
+    printf("source file: \"%s\" coppied to ---> \"%s\" successfully !!\n", inputFileName, destFileName);
 
     return 0;
 }
