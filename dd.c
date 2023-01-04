@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #define DEFAULT_BUFFER_SIZE 512
 
@@ -131,9 +132,32 @@ int main(int argc, char *argv[])
         if ((f_readSize <= 0) || (((argc < 4) || (count == NULL) || ((count - argv[3]) != 0)) && (cnt <= 0)))
             break;
 
-        write(destFd, readBuf, f_readSize);
-        memset(readBuf, 0, blockSize);
+        if (lcaseFlg)
+        {
+            for (int i = 0; i < f_readSize; i++)
+            {
+                if (readBuf[i] >= 'A' && readBuf[i] <= 'Z')
+                {
+                    readBuf[i] = readBuf[i] + 32;
+                }
+            }
+            write(destFd, readBuf, f_readSize);
+        }
+        else if (ucaseFlg)
+        {
+            for (int i = 0; i < f_readSize; i++)
+            {
+                if (readBuf[i] >= 'a' && readBuf[i] <= 'z')
+                {
+                    readBuf[i] = readBuf[i] - 32;
+                }
+            }
+            write(destFd, readBuf, f_readSize);
+        }
+        else
+            write(destFd, readBuf, f_readSize);
 
+        memset(readBuf, 0, blockSize);
     } while (f_readSize > 0, cnt--);
 
     printf("source file: \"%s\" coppied to ---> \"%s\" successfully !!\n", inputFileName, destFileName);
