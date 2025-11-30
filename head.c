@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <string.h>
 
 #define DEFAULT_LINE_NUMBER 10
 
@@ -21,11 +22,11 @@ int main(int argc, char *argv[])
 
     struct option options[] = {
         {"bytes", required_argument, NULL, 'c'}, // "help" argümanın adı, "no_argument" seçenekli/seçeneksiz olması,
-        {"lines", optional_argument, NULL, 'n'}, // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
+        {"lines", required_argument, NULL, 'n'}, // 3.parametreye NULL geçilirse getopy_long argümanı bulursa 4. parametreye girilen değeri geri döner
         {"verbose", no_argument, &verbose_flag, 'v'},
-        {"help", no_argument, &help_flag, 3},    // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi
+        {"help", no_argument, &help_flag, 3},    // 3.parametreye bir adres girilirse ör: &helpFlg, getopt_long eğer argümanı bulursa helpFlg'yi 4. parametredeki değer ile set eder
         {"version", no_argument, &version_flag, 4},
-        {0, 0, 0, 0}, // 4. parametredeki değer ile set eder
+        {0, 0, 0, 0}, // son eleman bu şekilde olmalı
     };
 
     while ((result = getopt_long(argc, argv, "c:n:v", options, &index)) != -1)
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        case '?':
+        case '?': // hata durumunda getopt_long "?" geri döner 
         {
             if (optopt == 'c')
                 fprintf(stderr, "-c option must have an argument\n");
@@ -70,36 +71,94 @@ int main(int argc, char *argv[])
     if (errFlag)
         exit(EXIT_FAILURE);
 
-    if (optind != argc)
+    if (optind != argc) // seçeneksiz argüman
     {
         inputFileName = argv[optind];
-        printf("input file name: %s\n", inputFileName);
+        //printf("input file name: %s\n", inputFileName);
     }
     else
     {
-        if (!help_flag)
+        if (!help_flag && !version_flag)
         {
-            printf("NO INPUT FILE NAME\n");
+            printf("NO INPUT FILE NAME, stdin is used as input\n");
+            inputFileName = NULL;
+            //exit(EXIT_FAILURE);
+        }
+    }
+
+    if (help_flag)
+    {
+        printf("sage: head [OPTION]... [FILE]... \n\
+                Print the first 10 lines of each FILE to standard output.\n\
+                With more than one FILE, precede each with a header giving the file name.\n\
+                \n\
+                With no FILE, or when FILE is -, read standard input.\n\
+                \n\
+                Mandatory arguments to long options are mandatory for short options too.\n\
+                -c, --bytes=[-]NUM       print the first NUM bytes of each file;\n\
+                                    with the leading '-', print all but the last\n\
+                                    NUM bytes of each file\n\
+                -n, --lines=[-]NUM       print the first NUM lines instead of the first 10;\n\
+                                    with the leading '-', print all but the last\n\
+                                    NUM lines of each file\n\
+                -v, --verbose            always print headers giving file names\n\
+                --help     display this help and exit\n\
+                --version  output version information and exit\n");
+
+      return 0;
+    }
+
+    if (version_flag)
+    {
+        printf("head version 1.0 \nWritten by S.Can İNEL, on July 2022\nDedicated to my sweetheart Ms.Şevval :)\n");
+        return 0;
+    }
+
+    FILE *fp = NULL;
+    static int c = 0;
+
+    if (inputFileName == NULL || strcmp(inputFileName, "-") == 0)
+    {
+        fp = stdin;
+    }
+    else
+    {
+        fp = fopen(inputFileName, "r");
+        if (fp == NULL)
+        {
+            perror("fopen");
             exit(EXIT_FAILURE);
         }
+    }
+
+    if (!fp)
+    {
+        perror("File opening failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (verbose_flag)
+    {
+        printf("==>%s<==\n", inputFileName);
+    }
+
+    if(bytes_flag && lines_flag)
+    {
+        printf("byte and line options cannot be used together\n");
+        exit(EXIT_FAILURE);
     }
 
     if (bytes_flag)
     {
-        printf("-c or --bytes option is used\n");
-        static int c = 0;
+        //printf("-c or --bytes option is used\n");
+        
+        int inputBytes = atoi(bytes_arg);
 
-        FILE *fp = fopen(inputFileName, "r");
-
-        if (!fp)
+        if (!inputBytes)
         {
-            perror("File opening failed");
+            printf("wrong option argument\n");
             exit(EXIT_FAILURE);
         }
-        printf("bytes arg: %s", bytes_arg);
-
-        int inputBytes = atoi(bytes_arg);
-        printf("input bytes: %d\n", inputBytes);
 
         for (int i = 0; i < inputBytes; ++i)
         {
@@ -108,24 +167,13 @@ int main(int argc, char *argv[])
                 break;
             putchar(c);
         }
-        putchar('\n');
-        fclose(fp);
     }
 
     if (lines_flag)
     {
         if (lines_arg == NULL) /*write 10 line by default*/
         {
-            printf("-n option is used with default line number\n");
-            static int c = 0;
-
-            FILE *fp = fopen(inputFileName, "r");
-
-            if (!fp)
-            {
-                perror("File opening failed");
-                exit(EXIT_FAILURE);
-            }
+            //printf("-n option is used with default line number\n");
 
             for (int i = 0; i < DEFAULT_LINE_NUMBER; ++i)
             {
@@ -137,22 +185,15 @@ int main(int argc, char *argv[])
                 }
                 putchar('\n');
             }
-            putchar('\n');
-            fclose(fp);
         }
         else
         {
-            printf("input lines argument %s", lines_arg);
+            //printf("input lines argument %s\n", lines_arg);
             int inputLines = atoi(lines_arg);
 
-            printf("-n option is used\n");
-            static int c = 0;
-
-            FILE *fp = fopen(inputFileName, "r");
-
-            if (!fp)
+            if (!inputLines)
             {
-                perror("File opening failed");
+                printf("wrong option argument\n");
                 exit(EXIT_FAILURE);
             }
 
@@ -164,24 +205,11 @@ int main(int argc, char *argv[])
                 }
                 putchar('\n');
             }
-            putchar('\n');
-            fclose(fp);
         }
     }
-
-    if (verbose_flag)
+    
+    if (!bytes_flag && !lines_flag)
     {
-        printf("==>%s<==\n", inputFileName);
-        static int c = 0;
-
-        FILE *fp = fopen(inputFileName, "r");
-
-        if (!fp)
-        {
-            perror("File opening failed");
-            exit(EXIT_FAILURE);
-        }
-
         for (int i = 0; i < DEFAULT_LINE_NUMBER; ++i)
         {
             while ((c = fgetc(fp)) != '\n')
@@ -190,34 +218,8 @@ int main(int argc, char *argv[])
             }
             putchar('\n');
         }
-        putchar('\n');
-        fclose(fp);
     }
-
-    if (help_flag)
-    {
-        printf("sage: head [OPTION]... [FILE]... \n\
-Print the first 10 lines of each FILE to standard output.\n\
-With more than one FILE, precede each with a header giving the file name.\n\
-\n\
-With no FILE, or when FILE is -, read standard input.\n\
-\n\
-Mandatory arguments to long options are mandatory for short options too.\n\
-  -c, --bytes=[-]NUM       print the first NUM bytes of each file;\n\
-                             with the leading '-', print all but the last\n\
-                             NUM bytes of each file\n\
-  -n, --lines=[-]NUM       print the first NUM lines instead of the first 10;\n\
-                             with the leading '-', print all but the last\n\
-                             NUM lines of each file\n\
-  -v, --verbose            always print headers giving file names\n\
-      --help     display this help and exit\n\
-      --version  output version information and exit\n");
-    }
-
-    if (version_flag)
-    {
-        printf("head version 1.0 \nWritten by S.Can İNEL, on July 2022\nDedicated to my sweetheart Ms.Şevval :)\n");
-    }
-
+    fclose(fp);
+    
     return 0;
 }
