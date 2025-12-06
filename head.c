@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < inputBytes; ++i)
         {
             c = fgetc(fp);
-            if (feof(fp))
+            if (c == EOF)
                 break;
             putchar(c);
         }
@@ -177,12 +177,14 @@ int main(int argc, char *argv[])
 
             for (int i = 0; i < DEFAULT_LINE_NUMBER; ++i)
             {
-                while ((c = fgetc(fp)) != '\n')
+                while ((c = fgetc(fp)) != '\n' && c != EOF) 
                 {
-                    if (feof(fp))
-                        break;
                     putchar(c);
                 }
+                
+                if (c == EOF)
+                    break;
+
                 putchar('\n');
             }
         }
@@ -199,10 +201,14 @@ int main(int argc, char *argv[])
 
             for (int i = 0; i < inputLines; ++i)
             {
-                while ((c = fgetc(fp)) != '\n')
+                while ((c = fgetc(fp)) != '\n' && c != EOF)
                 {
                     putchar(c);
                 }
+
+                if (c == EOF)
+                    break;
+
                 putchar('\n');
             }
         }
